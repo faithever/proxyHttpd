@@ -2,6 +2,7 @@ import http.server
 import socketserver
 import sys
 import requests
+import os
 from urllib.parse import urlparse
 
 fileServerAddr = sys.argv[1]
@@ -14,11 +15,11 @@ class ProxyHttpd (http.server.BaseHTTPRequestHandler):
 		print("Request: {}".format(request))
 		super(ProxyHttpd, self)
 	"""
-	
+
 	def do_GET(self):
 		parsed_path = urlparse(self.path)
 		filepath = parsed_path.path
-		#print("The requested file : {}".format(filepath))
+		print("The requested file : {}".format(filepath))
 		if len(filepath) > 0 and not filepath in "/favicon.ico":
 			url = "http://"+fileServerAddr+":"+fileServerPort+filepath
 			response = requests.get(url, stream=True)
@@ -43,6 +44,27 @@ class ProxyHttpd (http.server.BaseHTTPRequestHandler):
 			message = "File not Found"
 			self.wfile.write(message.encode())
 			#self.wfile.write(bytes("File Not Found", "UTF-8"))
+			
+	def do_PUT(self):
+		parsed_path = urlparse(self.path)
+		filepath = parsed_path.path
+		fileName = os.path.basename(filepath)
+		url = "http://"+fileServerAddr+":"+fileServerPort+filepath
+		contentLength = int(self.headers["Content-Length"])
+		headers = {
+			"Content-Length":str(contentLength),
+			"Content-Type":"application/binary",
+		}
+		print("The Url: {}".format(url))
+		print("The content length:{}".format(contentLength))
+		data = self.rfile.read(contentLength)
+		response = requests.put(url, data=data, headers=headers)
+		print(response)
+		self.send_response(200)
+		self.end_headers()
+		
+
+	
 server_address = ('', 9999)		
 httpd = http.server.HTTPServer(server_address, ProxyHttpd)
 print("Listen port {}".format(9999))
@@ -52,3 +74,4 @@ try :
 	httpd.serve_forever()
 except KeyboardInterrupt:
 	sys.exit("Program stop because of KeyboardInterrupt !!")
+	
