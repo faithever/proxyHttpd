@@ -16,16 +16,9 @@ class HttpHandler(http.server.BaseHTTPRequestHandler):
       #print("Enter with dirs({}) targetFile({})".format(self.dirs,targetFile))
       for dirname in self.dirs:
          for (dirpath, dirs, files) in os.walk(dirname):
-            if 'chan_kpp.so' == targetFile:
-               if self.keyword in dirpath: 
-                  for f in files:
-                     if f == targetFile:
-                        return os.path.join(dirpath,f)
-            else:
-               for f in files:
-                  if f == targetFile:
-                     return os.path.join(dirpath,f)
-
+            for f in files:
+               if f == targetFile:
+                  return os.path.join(dirpath,f)
 
    def do_GET(self):
       parsedPath = urlparse(self.path)
